@@ -35,3 +35,7 @@ dc=True
 peak_max=False
 peak_min=False
 ```
+
+## Linux installation
+
+apt install python3-hid python3-hidapi
