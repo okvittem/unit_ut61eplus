@@ -35,6 +35,9 @@ cd . => header
 
 """
 
+meters=[ {'model':'UT61Eplus','vid': 0x10c4, 'pid': 0xEA8 },
+         {'model':'UT161E','vid': 0x1a86, 'pid': 0xe429 } ]
+
 
 class Measurement:
 
@@ -283,11 +286,7 @@ class Measurement:
             res += l
         return res
 
-
 class UT61EPLUS:
-
-    CP2110_VID = 0x10c4
-    CP2110_PID = 0xEA80
 
     _SEQUENCE_GET_NAME = bytes.fromhex('AB CD 03 5F 01 DA')
     _SEQUENCE_SEND_DATA = bytes.fromhex('AB CD 03 5E 01 D9')
@@ -310,13 +309,22 @@ class UT61EPLUS:
     def __init__(self):
         """open device"""
         self.dev = hid.device()
-        self.dev.open(self.CP2110_VID, self.CP2110_PID)
-        log.debug('device is open')
-        #self.dev.nonblocking = 1
-        self.dev.send_feature_report([0x41, 0x01])  # enable uart
-        self.dev.send_feature_report([0x50, 0x00, 0x00, 0x25, 0x80, 0x00, 0x00, 0x03, 0x00, 0x00])  # 9600 8N1 - from USB trace
-        self.dev.send_feature_report([0x43, 0x02])  # purge both fifos
-        log.debug('feature requests sent')
+        # self.dev.open(self.CP2110_VID, self.CP2110_PID)
+        for meter in meters:
+            log.debug('trying ' + meter['model'])
+            try:
+                self.dev.open( meter['vid'], meter['pid'])
+            except:
+                continue
+            else:
+                log.debug('found ' + meter['model'])
+                #self.dev.nonblocking = 1
+                self.dev.send_feature_report([0x41, 0x01])  # enable uart
+                self.dev.send_feature_report([0x50, 0x00, 0x00, 0x25, 0x80, 0x00, 0x00, 0x03, 0x00, 0x00])  # 9600 8N1 - from USB trace
+                self.dev.send_feature_report([0x43, 0x02])  # purge both fifos
+                log.debug('feature requests sent')
+                return
+        log.debug('no device  found')
 
     def _write(self, b: bytes):
         buf = []
